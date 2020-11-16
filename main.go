@@ -33,8 +33,10 @@ func init() {
 }
 
 func main() {
+
 	flag.Parse()
 	cpuTemp.Set(65.3)
+	cpuTemp.Add(10)
 	http.Handle("/metrics", promhttp.Handler())
 	fmt.Printf("Server listening up on port %s\n", *addr)
 	log.Fatal(http.ListenAndServe(*addr, nil))

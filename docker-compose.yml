@@ -6,6 +6,7 @@ services:
       - "5000:8080"
     volumes:
       - .:/code
+    command: "go run main.go"
 
   prometheus:
     image: prom/prometheus:v2.1.0
@@ -16,15 +17,15 @@ services:
     ports:
       - "9090:9090"
   grafana:
-     image: grafana/grafana
-     volumes:
-         - grafana_data:/var/lib/grafana
-     environment:
-       - GF_SECURITY_ADMIN_PASSWORD=pass
-     depends_on:
-       - prometheus
-     ports:
-       - '3000:3000'
+    image: grafana/grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=pass
+    depends_on:
+      - prometheus
+    ports:
+      - "3000:3000"
 
 volumes:
   prometheus_data: {}
