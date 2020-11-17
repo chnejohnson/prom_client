@@ -17,27 +17,30 @@ var (
 		Name: "cpu_temperature_celsius",
 		Help: "Current temperature of the CPU.",
 	})
-	hdFailures = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "hd_errors_total",
-			Help: "Number of hard-disk errors.",
-		},
-		[]string{"device"},
-	)
 )
 
-func init() {
-	// Metrics have to be registered to be exposed:
-	prometheus.MustRegister(cpuTemp)
-	prometheus.MustRegister(hdFailures)
-}
-
 func main() {
-
 	flag.Parse()
+
+	reg := prometheus.NewRegistry()
+
+	if err := reg.Register(cpuTemp); err != nil {
+		fmt.Println("cpu_temperature_celsius not registered:", err)
+	} else {
+		fmt.Println("cpu_temperature_celsius registered.")
+	}
+
 	cpuTemp.Set(65.3)
-	cpuTemp.Add(10)
-	http.Handle("/metrics", promhttp.Handler())
+
+	http.Handle("/", http.HandlerFunc(handleTemp))
+
+	http.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
+
 	fmt.Printf("Server listening up on port %s\n", *addr)
 	log.Fatal(http.ListenAndServe(*addr, nil))
+}
+
+func handleTemp(res http.ResponseWriter, req *http.Request) {
+	cpuTemp.Add(10)
+	res.Write([]byte("Hello World"))
 }

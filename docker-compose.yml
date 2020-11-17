@@ -5,7 +5,7 @@ services:
     ports:
       - "5000:8080"
     volumes:
-      - .:/code
+      - .:/app
     command: "go run main.go"
 
   prometheus:
@@ -16,6 +16,7 @@ services:
       - "--config.file=/etc/prometheus/prometheus.yaml"
     ports:
       - "9090:9090"
+      
   grafana:
     image: grafana/grafana
     volumes:
