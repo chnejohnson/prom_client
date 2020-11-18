@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,37 +9,37 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-var addr = flag.String("listen-address", ":8080", "The address to listen on for HTTP requests.")
-
 var (
 	cpuTemp = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name: "cpu_temperature_celsius",
 		Help: "Current temperature of the CPU.",
 	})
+
+	reqTotal = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "web_request_total",
+		Help: "Total webapp request count",
+	})
 )
 
+func init() {
+	// Metrics have to be registered to be exposed:
+	prometheus.MustRegister(cpuTemp)
+	prometheus.MustRegister(reqTotal)
+}
+
 func main() {
-	flag.Parse()
-
-	reg := prometheus.NewRegistry()
-
-	if err := reg.Register(cpuTemp); err != nil {
-		fmt.Println("cpu_temperature_celsius not registered:", err)
-	} else {
-		fmt.Println("cpu_temperature_celsius registered.")
-	}
 
 	cpuTemp.Set(65.3)
 
-	http.Handle("/", http.HandlerFunc(handleTemp))
+	http.Handle("/", http.HandlerFunc(requestCount))
+	http.Handle("/metrics", promhttp.Handler())
 
-	http.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
-
-	fmt.Printf("Server listening up on port %s\n", *addr)
-	log.Fatal(http.ListenAndServe(*addr, nil))
+	fmt.Printf("Server listening up on port %s\n", ":8080")
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-func handleTemp(res http.ResponseWriter, req *http.Request) {
-	cpuTemp.Add(10)
-	res.Write([]byte("Hello World"))
+func requestCount(res http.ResponseWriter, req *http.Request) {
+	reqTotal.Add(1)
+	res.Write([]byte("Count added!"))
+
 }
